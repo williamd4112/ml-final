@@ -72,8 +72,23 @@ class Dataset():
                     X.append(img[np.newaxis, :])
                     T.append(label)
         X = np.asarray(np.concatenate(X))
-        T = np.asarray(np.concatenate(T))
+        T = np.asiarray(np.concatenate(T))
         return X, T
+
+    def load_data_index(self, raw_data_path, ext='*.jpg'):
+        inds = []
+        for g_i in range(len(GENDERS)):
+            for a_i in range(len(AGES)):
+                age = AGES[a_i]
+                gender = GENDERS[g_i]
+                label = self._get_label(g_i, a_i)
+                
+                dir =  os.path.join(raw_data_path, age, gender)
+                for filename in tqdm(glob.glob(os.path.join(dir, ext))):
+                    index = filename
+                    inds.append((index, label))
+        return inds
+
 
     def __call__(self, dir, ext='*.jpg'):
         for filename in sorted(glob.glob(os.path.join(dir, ext))):
@@ -85,6 +100,8 @@ if __name__ == '__main__':
     Process training data from images in directory
     '''
     parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', help='mode', 
+            choices=['data', 'index'], type=str) 
     parser.add_argument('--label', help='label type', 
             choices=['gender', 'age', 'mix'], type=str, required=True) 
     parser.add_argument('--input', help='input', type=str, default='data')
@@ -97,16 +114,23 @@ if __name__ == '__main__':
 
     dataset = Dataset(label_type=args.label, size=args.size, crop=bool(args.crop), color=args.color)
 
-    out_x_train = '_'.join(['X_train', 'crop', args.color, str(args.crop), args.label, str(args.size)])
-    out_t_train = '_'.join(['T_train', 'crop', args.color, str(args.crop), args.label, str(args.size)])
-    out_x_test = '_'.join(['X_test', 'crop', args.color, str(args.crop), args.label, str(args.size)])
-    out_t_test = '_'.join(['T_test', 'crop', args.color, str(args.crop), args.label, str(args.size)])
+    if args.mode == 'data':
+        out_x_train = '_'.join(['X_train', 'crop', args.color, str(args.crop), args.label, str(args.size)])
+        out_t_train = '_'.join(['T_train', 'crop', args.color, str(args.crop), args.label, str(args.size)])
+        out_x_test = '_'.join(['X_test', 'crop', args.color, str(args.crop), args.label, str(args.size)])
+        out_t_test = '_'.join(['T_test', 'crop', args.color, str(args.crop), args.label, str(args.size)])
 
-    X, T = dataset.load_labeled_data(args.input)
-    X_train, X_test, T_train, T_test = train_test_split(X, T, test_size=args.frac)
+        X, T = dataset.load_labeled_data(args.input)
+        X_train, X_test, T_train, T_test = train_test_split(X, T, test_size=args.frac)
 
-    np.save(join(args.output, out_x_train), X_train)
-    np.save(join(args.output, out_t_train), T_train)
-    np.save(join(args.output, out_x_test), X_test)
-    np.save(join(args.output, out_t_test), T_test) 
-                              
+        np.save(join(args.output, out_x_train), X_train)
+        np.save(join(args.output, out_t_train), T_train)
+        np.save(join(args.output, out_x_test), X_test)
+        np.save(join(args.output, out_t_test), T_test) 
+    else:
+        inds = dataset.load_data_index(args.input)
+        with open(args.output,'wb') as csv_file:
+            wr = csv.writer(csv_file)
+            for ind in inds:
+                wr.writerow(ind)
+                                           

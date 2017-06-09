@@ -14,7 +14,7 @@ def post_process(imgs, mean, scale):
 
 
 class FaceDetector(object):
-    def __init__(self, cascPath="./FaceDetect/haarcascade_frontalface_default.xml"):
+    def __init__(self, cascPath="./haarcascade_frontalface_default.xml"):
         self.model = cv2.CascadeClassifier(cascPath)
 
     def detect(self, img):

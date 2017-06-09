@@ -13,39 +13,12 @@ import tensorflow as tf
 
 from keras.models import load_model
 from keras.models import Model
-from keras.layers import Flatten
-from keras.layers import Dense
-from keras.layers import Input
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
-from keras.engine.topology import get_source_inputs
-from keras.utils import layer_utils
-from keras.utils.data_utils import get_file
-
 from keras import backend as K
 from keras.backend.tensorflow_backend import set_session
 
 from dataset import Dataset
-from preprocess import *
-
-def get_predictor(args):
-    if args.mode == 'single':
-        model = load_model(args.ckpt)
-        def f(x):
-            return model.predict_on_batch(x)
-    elif args.mode == 'dual':
-        ckpts = args.ckpt.split(',')
-        model_gender = load_model(ckpts[0])
-        model_age = load_model(ckpts[1])
-        def f(x):
-            g = model_gender.predict_on_batch(x).argmax(axis=1)
-            a = model_age.predict_on_batch(x).argmax(axis=1)
-            return g * 4 + a
-    return f
+from preprocess import pre_process, post_process
+from util import get_predictor, get_session
 
 def main(args): 
     assert args.ckpt != None
@@ -53,12 +26,11 @@ def main(args):
     logging.info('Load from %s' % args.ckpt)
     
     # Config tf session
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    set_session(tf.Session(config=config))
+    sess = get_session()
+    set_session(sess)    
 
     # Load model and setup prediction function
-    predictor = get_predictor(args)        
+    predictor = get_predictor(args.mode, args.ckpt)        
 
     # Test
     scale = 1.0 / 255.0
@@ -67,15 +39,11 @@ def main(args):
 
     logging.info('Load data from %s' % args.X)
     for filename, x in dataset(args.X):
-        print filename, predictor(x[np.newaxis,:])
-    '''
-    # Postprocess
-    T = T.argmax(axis=1)
-    Y = Y.argmax(axis=1)
-    
-    print Y.shape, T.shape
-    print float(np.equal(Y, T).sum()) / float(len(T))
-    '''
+        index = filename
+        x = x.astype(np.float32)
+        x = pre_process(x, mean, scale)
+        label = predictor(x[np.newaxis,:])[0]
+        print '%s,%d' % (index, label)
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(asctime)s] %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)

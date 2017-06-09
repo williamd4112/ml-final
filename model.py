@@ -32,7 +32,7 @@ from keras.applications.imagenet_utils import preprocess_input
 from keras.applications.imagenet_utils import _obtain_input_shape
 
 
-class PredictionModel(object):    
+class PredictionModel(object):
     def train(self, X_train, T_train, X_test, T_test, logdir, fold=3, batch_size=64, epochs=100, lr=1e-5, augment=False):
         # Setup optmizer
         opt = optimizers.Adam(lr=lr, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=1e-9)
