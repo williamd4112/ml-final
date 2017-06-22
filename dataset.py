@@ -72,7 +72,7 @@ class Dataset():
                     X.append(img[np.newaxis, :])
                     T.append(label)
         X = np.asarray(np.concatenate(X))
-        T = np.asiarray(np.concatenate(T))
+        T = np.asarray(np.concatenate(T))
         return X, T
 
     def load_data_index(self, raw_data_path, ext='*.jpg'):
