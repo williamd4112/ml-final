@@ -1,4 +1,6 @@
 # Make dataset
+Download the dataset from course website and put at ${PROJ_DIR}/data
+
 ```
 ./make_dataset.sh
 ```
